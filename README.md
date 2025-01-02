@@ -37,7 +37,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Special Thanks
 
-Special thanks Krish Naik and other active contributor in youtube 
+Special thanks to Krish Naik and other active contributor in youtube 
 
 ## Contact
 
