@@ -9,3 +9,16 @@ groq
 openai
 arxiv
 pypdf
+streamlit
+pandas
+plotly
+googlesearch-python
+pycountry
+ollama
+lancedb
+tantivy
+google.generativeai
+crewai
+crewai-tools
+langchain_google_genai
+

@@ -67,6 +67,6 @@ multi_ai_agent = Agent(
 
 #multi_ai_agent.print_response('Summarize analyst recommendation and share the latest news for Nvidia and Intel stoks and share the final recommendation between the stokcs', stream=True)
 multi_ai_agent.print_response('Is there any paper related to Solar power prediction', stream=True)
-# setx OPENAI_API_KEY sk-proj-cUt1IVJk51PA4UmJcao7y0d0JmywGLIQepPLhtVxkzmfoBANESDg6VZxfYicqItcf9pmPvPBHUVQqAm3gA
-# setx GROQ_API_KEY gsk_uvusndMMt0WVJhP3hAfFYgec9ixvRSzFkGVq
-# setx PHIDATA_API_KEY phi-Y2cwXLtfZawnZCIcfVy4zRg
+# setx OPENAI_API_KEY sk-proj-cUt1IVJk51PA4UmJcao7y06Oab31qT-SsFISaxn0JmywGLIQepPLhtVxkzmfoBANESDg6VZxxlT3BlbTTlDNmI_lNs1ftD-JydUBD3WYicqItcf9pmPvPBHUVQqAm3gA
+# setx GROQ_API_KEY gsk_uvusndMMt0WVJhP3hAnFWGdyb3FYgec9ixvRSzFkGVq
+# setx PHIDATA_API_KEY phi-Y2cwXLtfZawnZCIcokeOFO5TFVy4zRg
