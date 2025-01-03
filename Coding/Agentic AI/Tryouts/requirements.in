@@ -22,3 +22,7 @@ crewai
 crewai-tools
 langchain_google_genai
 ollama
+faiss-cpu
+langchain
+langchain_community
+langchain-groq
