@@ -26,3 +26,8 @@ faiss-cpu
 langchain
 langchain_community
 langchain-groq
+# RAG Evaluation 
+ragas 
+deepeval
+ipykernel
+tqdm
