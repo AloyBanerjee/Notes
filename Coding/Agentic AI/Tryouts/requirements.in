@@ -26,8 +26,19 @@ faiss-cpu
 langchain
 langchain_community
 langchain-groq
+langsmith
 # RAG Evaluation 
 ragas 
 deepeval
 ipykernel
 tqdm
+numpy 
+pandas
+pgvector
+psycopg
+ipywidgets
+arxiv
+pypdf
+pymupdf
+wikipedia
+bs4
