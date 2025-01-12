@@ -15,6 +15,7 @@ plotly
 googlesearch-python
 pycountry
 ollama
+chromadb
 lancedb
 tantivy
 google.generativeai
@@ -26,8 +27,9 @@ faiss-cpu
 langchain
 langchain_community
 langchain-groq
+langchain_text_splitters 
+langchain-openai
 langsmith
-# RAG Evaluation 
 ragas 
 deepeval
 ipykernel
@@ -42,3 +44,15 @@ pypdf
 pymupdf
 wikipedia
 bs4
+scikit-learn
+torch
+langchain_huggingface
+sentence-transformers
+Pillow
+google-generativeai
+together
+e2b-code-interpreter
+e2b
+numpy
+pandas 
+matplotlib
