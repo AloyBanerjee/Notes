@@ -52,3 +52,4 @@ sentence-transformers
 Pillow
 google-generativeai
 together
+streamlit-code-editor

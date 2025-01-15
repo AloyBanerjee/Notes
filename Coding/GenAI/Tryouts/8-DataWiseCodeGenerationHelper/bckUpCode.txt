@@ -1,0 +1,59 @@
+# # Pass dataset_path to chat_with_llm
+                    # execution, llm_response = chat_with_llm(code_interpreter, query, dataset_path)
+                    
+                    # # Display LLM's text response
+                    # st.write("AI Response:")
+                    # st.write(llm_response)
+                    # st.write(execution.results)
+                    # # Display results/visualizations
+
+                    # for result in execution.results: 
+                    #     st.write('Coming!!!')
+                    #     st.write(result)
+
+
+                    # if code_results:
+                    #     st.write('Coming!!!')
+                    #     # Access the 'Results' attribute which contains the list of Result objects
+                    #     #results = code_results.results  # This is where the list of Result objects is stored
+                    #     st.write(code_results.Logs.stdout)
+                    #     #st.dataframe(results[0].logs.stdout)  
+                    #     # # Iterate over each result in the list
+                    #     # for result in results:
+                    #     #     if hasattr(result, 'png') and result.png:  # Check if PNG data is available
+                    #     #         # Decode the base64-encoded PNG data
+                    #     #         png_data = base64.b64decode(result.png)
+                    #     #         with open('chart.png', 'wb') as f:
+                    #     #             f.write(base64.b64decode(png_data.png))
+                    #     #         # Convert PNG data to an image and display it
+                    #     #         image = Image.open(BytesIO(png_data))
+                    #     #         st.image(image, caption="Generated Visualization", use_container_width=False)
+                    #     #     if hasattr(result, 'figure'):  # For Matplotlib figures
+                    #     #         fig = result.figure  # Extract the Matplotlib figure
+                    #     #         if fig:  # Ensure the figure exists
+                    #     #             st.pyplot(fig)  # Display using st.pyplot
+                    #     #     if hasattr(result, 'show'):  # For Plotly figures
+                    #     #         st.plotly_chart(result)
+                    #     #     if isinstance(result.logs.stdout, (pd.DataFrame, pd.Series)):
+                    #     #         st.write('Coming Here!!')
+                    #     #         st.dataframe(result.logs.stdout)                          
+                    #     #     st.dataframe(result.logs.stdout)  
+
+                    # # if code_results:
+                    # #     for result in code_results:
+                    # #         if hasattr(result, 'png') and result.png:  # Check if PNG data is available
+                    # #             # Decode the base64-encoded PNG data
+                    # #             png_data = base64.b64decode(result.png)                                
+                    # #             # Convert PNG data to an image and display it
+                    # #             image = Image.open(BytesIO(png_data))
+                    # #             st.image(image, caption="Generated Visualization", use_container_width=False)
+                    # #         elif hasattr(result, 'figure'):  # For matplotlib figures
+                    # #             fig = result.figure  # Extract the matplotlib figure
+                    # #             if fig:  # Ensure the figure exists
+                    # #                 st.pyplot(fig)  # Display using st.pyplot
+                    # #         elif hasattr(result, 'show'):  # For plotly figures
+                    # #             st.plotly_chart(result)
+                    # #         elif isinstance(result, (pd.DataFrame, pd.Series)):
+                    # #             st.dataframe(result.logs.stdout)
+                    # #         else:
+                    # #             st.dataframe(result.logs.stdout) 
