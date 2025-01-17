@@ -1,0 +1,18 @@
+# Core dependencies
+langchain
+langgraph
+qdrant-client
+langchain-openai
+langchain-anthropic
+tavily-python
+langchain-community
+langchain-core
+streamlit
+tenacity
+anthropic
+openai
+tiktoken
+pydantic
+numpy
+PyYAML
+nest-asyncio
