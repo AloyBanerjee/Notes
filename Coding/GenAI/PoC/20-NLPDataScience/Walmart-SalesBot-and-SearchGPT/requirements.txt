@@ -9,7 +9,7 @@ chromadb>=0.3.29
 tiktoken>=0.4.0
 pytest-asyncio
 litellm>=0.1.558
-Pydantic==1.10.7
+Pydantic==1.10.13
 faiss-cpu==1.7.4
 pinecone-client==2.2.4
 python-dotenv
