@@ -3,7 +3,9 @@ import google.generativeai as genai
 from PyPDF2 import PdfReader
 import streamlit.components.v1 as components
 from dotenv import load_dotenv
+#import tabula
 import os 
+import pandas as pd
 
 load_dotenv()
 #https://github.com/necolo/d3-mindmap
@@ -152,14 +154,14 @@ def main():
     if uploaded_file is not None:
         with st.spinner("🔄 Processing PDF and generating mindmap..."):
             text = extract_text_from_pdf(uploaded_file)
-            
+
             if text:
                 st.info(f"Successfully extracted {len(text)} characters from PDF")
                 
                 markdown_content = create_mindmap_markdown(text)
                 
                 if markdown_content:
-                    tab1, tab2 = st.tabs(["📊 Mindmap", "📝 Markdown"])
+                    tab1, tab2, tab3 = st.tabs(["📊 Mindmap", "📝 Markdown", "📋 Tables"])
                     
                     with tab1:
                         st.subheader("Interactive Mindmap")
@@ -176,6 +178,8 @@ def main():
                             file_name="mindmap.md",
                             mime="text/markdown"
                         )
+                    with tab3:
+                        st.success('Coming Soon............ :-)')
 
 if __name__ == "__main__":
     main()

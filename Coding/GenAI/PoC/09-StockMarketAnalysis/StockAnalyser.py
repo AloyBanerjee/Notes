@@ -41,7 +41,8 @@ COMMON_STOCKS = {
     'BHARTIARTL': 'BHARTIARTL.NS',
     'HCLTECH': 'HCLTECH.NS',
     'ITC': 'ITC.NS',
-    'AXISBANK': 'AXISBANK.NS'
+    'AXISBANK': 'AXISBANK.NS', 
+    'ABBOTT': 'ABBOTINDIA.NS',
 }
 
 # Page configuration
@@ -212,6 +213,18 @@ def get_symbol_from_name(stock_name):
         st.error(f"Error processing {stock_name}: {str(e)}")
         return None
 
+def calculate_z_score(hist_data):
+    """Calculate z-score for the close prices."""
+    mean_close = hist_data['Close'].mean()
+    std_close = hist_data['Close'].std()
+    hist_data['z_score'] = (hist_data['Close'] - mean_close) / std_close
+    return hist_data
+
+def calculate_ema(hist_data, period=50):
+    """Calculate the Exponential Moving Average (EMA)."""
+    hist_data[f'{period}_EMA'] = hist_data['Close'].ewm(span=period, adjust=False).mean()
+    return hist_data
+
 def get_stock_data(symbol, period="1y"):
     """Enhanced function to fetch stock data with proper cache handling"""
     try:
@@ -248,8 +261,15 @@ def get_stock_data(symbol, period="1y"):
         
         if hist.empty:
             raise ValueError("No historical data available")
-            
+         
+        
+        # Calculate z-score and 50 EMA
+        hist = calculate_z_score(hist)
+        hist = calculate_ema(hist, period=50) 
+        hist = calculate_rsi(hist, window=14) 
+
         return info, hist
+    
     except Exception as e:
         st.error(f"Error fetching data for {symbol}: {str(e)}")
         return None, None
@@ -267,7 +287,14 @@ def create_price_chart(hist_data, symbol):
         close=hist_data['Close'],
         name='Price'
     ))
-    
+    # Add 50 EMA
+    fig.add_trace(go.Scatter(
+        x=hist_data.index,
+        y=hist_data['50_EMA'],
+        mode='lines',
+        name='50 EMA',
+        line=dict(color='purple')
+    ))
     # Add moving averages
     ma20 = hist_data['Close'].rolling(window=20).mean()
     ma50 = hist_data['Close'].rolling(window=50).mean()
@@ -364,6 +391,95 @@ def display_metrics(info):
         st.metric("52 Week Low", low)
         st.markdown('</div>', unsafe_allow_html=True)
 
+def calculate_rsi(hist_data, window=14):
+    """Calculate the Relative Strength Index (RSI)."""
+    delta = hist_data['Close'].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
+
+    rs = gain / loss
+    hist_data['RSI'] = 100 - (100 / (1 + rs))
+    return hist_data
+
+def create_rsi_chart(hist_data, symbol):
+    """Create an RSI chart using Plotly."""
+    fig = go.Figure()
+
+    # Add RSI line
+    fig.add_trace(go.Scatter(
+        x=hist_data.index,
+        y=hist_data['RSI'],
+        mode='lines',
+        name='RSI',
+        line=dict(color='gray')
+    ))
+
+    # Add overbought and oversold lines
+    fig.add_hline(y=70, line_dash="dash", line_color="red", annotation_text="Overbought (70)", annotation_position="top right")
+    fig.add_hline(y=30, line_dash="dash", line_color="green", annotation_text="Oversold (30)", annotation_position="bottom right")
+
+    fig.update_layout(
+        title=f'{symbol} RSI (14)',
+        yaxis_title='RSI',
+        template='plotly_white',
+        height=400,
+        xaxis_rangeslider_visible=False
+    )
+    
+    return fig
+
+def create_rsi_chart_with_trendline(hist_data, symbol):
+    """Create an RSI chart with a rising trendline."""
+    fig = go.Figure()
+
+    # Add RSI line
+    fig.add_trace(go.Scatter(
+        x=hist_data.index,
+        y=hist_data['RSI'],
+        mode='lines',
+        name='RSI',
+        line=dict(color='gray')
+    ))
+
+    # Add overbought and oversold lines
+    fig.add_hline(y=70, line_dash="dash", line_color="red", annotation_text="Overbought (70)", annotation_position="top right")
+    fig.add_hline(y=30, line_dash="dash", line_color="green", annotation_text="Oversold (30)", annotation_position="bottom right")
+
+    # Identify and add a rising trendline manually (customize points as needed)
+    rising_points = hist_data.iloc[[10, 25, 40]]  # Indices of specific rising highs
+    fig.add_trace(go.Scatter(
+        x=rising_points.index,
+        y=rising_points['RSI'],
+        mode='lines+markers',
+        name='Rising RSI Trendline',
+        line=dict(color='orange', dash='dot'),
+        marker=dict(size=8, color='orange')
+    ))
+
+    # Annotate the trendline
+    fig.add_annotation(
+        x=rising_points.index[1],
+        y=rising_points['RSI'].iloc[1],
+        text="Rising RSI highs",
+        showarrow=True,
+        arrowhead=2,
+        ax=40,
+        ay=-40,
+        font=dict(size=12, color="black"),
+        arrowcolor="orange"
+    )
+
+    fig.update_layout(
+        title=f'{symbol} RSI (14) with Trendline',
+        yaxis_title='RSI',
+        template='plotly_white',
+        height=400,
+        xaxis_rangeslider_visible=False
+    )
+    
+    return fig
+
+
 def main():
     # Sidebar
     with st.sidebar:
@@ -458,34 +574,34 @@ def main():
                             
                             with other_info:
                                 st.markdown("### Company's Entire Information")
-                                # Address and Contact Details
-                                st.markdown("#### Address and Contact")
-                                st.write(f"Address 1: {info.get('address1', 'N/A')}")
-                                st.write(f"Address 2: {info.get('address2', 'N/A')}")
-                                st.write(f"City: {info.get('city', 'N/A')}")
-                                st.write(f"Zip Code: {info.get('zip', 'N/A')}")
-                                st.write(f"Country: {info.get('country', 'N/A')}")
-                                st.write(f"Phone: {info.get('phone', 'N/A')}")
-                                st.write(f"Fax: {info.get('fax', 'N/A')}")
-                                st.write(f"Website: {info.get('website', 'N/A')}")
+                                # # Address and Contact Details
+                                # st.markdown("#### Address and Contact")
+                                # st.write(f"Address 1: {info.get('address1', 'N/A')}")
+                                # st.write(f"Address 2: {info.get('address2', 'N/A')}")
+                                # st.write(f"City: {info.get('city', 'N/A')}")
+                                # st.write(f"Zip Code: {info.get('zip', 'N/A')}")
+                                # st.write(f"Country: {info.get('country', 'N/A')}")
+                                # st.write(f"Phone: {info.get('phone', 'N/A')}")
+                                # st.write(f"Fax: {info.get('fax', 'N/A')}")
+                                # st.write(f"Website: {info.get('website', 'N/A')}")
                                 
-                                # Industry and Sector Details
-                                st.markdown("#### Industry and Sector")
-                                st.write(f"Industry: {info.get('industry', 'N/A')} ({info.get('industryDisp', 'N/A')})")
-                                st.write(f"Sector: {info.get('sector', 'N/A')} ({info.get('sectorDisp', 'N/A')})")
+                                # # Industry and Sector Details
+                                # st.markdown("#### Industry and Sector")
+                                # st.write(f"Industry: {info.get('industry', 'N/A')} ({info.get('industryDisp', 'N/A')})")
+                                # st.write(f"Sector: {info.get('sector', 'N/A')} ({info.get('sectorDisp', 'N/A')})")
                                 
-                                # Business Summary
-                                st.markdown("#### Business Summary")
-                                st.write(info.get('longBusinessSummary', 'N/A'))
+                                # # Business Summary
+                                # st.markdown("#### Business Summary")
+                                # st.write(info.get('longBusinessSummary', 'N/A'))
                                 
-                                # Company Officers
-                                st.markdown("#### Company Officers")
-                                for officer in info.get('companyOfficers', []):
-                                    st.write(f"- **Name**: {officer.get('name', 'N/A')}")
-                                    st.write(f"  - Title: {officer.get('title', 'N/A')}")
-                                    st.write(f"  - Age: {officer.get('age', 'N/A')}")
-                                    st.write(f"  - Total Pay: {officer.get('totalPay', 'N/A')}")
-                                    st.write(f"  - Fiscal Year: {officer.get('fiscalYear', 'N/A')}")
+                                # # Company Officers
+                                # st.markdown("#### Company Officers")
+                                # for officer in info.get('companyOfficers', []):
+                                #     st.write(f"- **Name**: {officer.get('name', 'N/A')}")
+                                #     st.write(f"  - Title: {officer.get('title', 'N/A')}")
+                                #     st.write(f"  - Age: {officer.get('age', 'N/A')}")
+                                #     st.write(f"  - Total Pay: {officer.get('totalPay', 'N/A')}")
+                                #     st.write(f"  - Fiscal Year: {officer.get('fiscalYear', 'N/A')}")
                                 
                                 # Financial Information
                                 st.markdown("#### Financial Information")
@@ -544,13 +660,25 @@ def main():
                                     st.write(f"Exchange: {info.get('exchange', 'N/A')}")
                                     st.write(f"Currency: {info.get('currency', 'N/A')}")
                                     st.write(f"Volume: {info.get('volume', 'N/A'):,}")
+                                    st.markdown("### Z-Score Analysis")
+                                    latest_z_score = hist['z_score'].iloc[-1]
+                                    st.metric("Latest z-Score", f"{latest_z_score:.2f}")
+
+                                    # Provide interpretation
+                                    # if abs(latest_z_score) > 2:
+                                    #     st.warning("The z-score indicates the price is significantly far from the average.")
+                                    # else:
+                                    #     st.info("The z-score indicates the price is within the normal range.")
                             
                             with charts_tab:
                                 # Price chart
-                                st.markdown("### Price Analysis")
+                                st.markdown("### Price & RSI Analysis")
                                 price_chart = create_price_chart(hist, stock_symbol)
-                                st.plotly_chart(price_chart, use_container_width=True)
+                                st.plotly_chart(price_chart, use_container_width=True)                              
                                 
+                                rsi_chart = create_rsi_chart_with_trendline(hist, stock_symbol)
+                                st.plotly_chart(rsi_chart, use_container_width=True)
+
                                 # Volume chart
                                 volume_chart = create_volume_chart(hist)
                                 st.plotly_chart(volume_chart, use_container_width=True)
@@ -569,12 +697,14 @@ def main():
                                     rsi_14_neg = abs(rsi_neg.rolling(window=14).mean())
                                     rsi_14 = 100 - (100 / (1 + rsi_14_pos / rsi_14_neg))
                                     st.metric("RSI (14)", f"{rsi_14.iloc[-1]:.2f}")
+                                    st.metric("Latest z-Score", f"{hist['z_score'].iloc[-1]:.2f}")
                                 
                                 with col2:
                                     ma20 = hist['Close'].rolling(window=20).mean()
                                     ma50 = hist['Close'].rolling(window=50).mean()
                                     cross_signal = "Bullish" if ma20.iloc[-1] > ma50.iloc[-1] else "Bearish"
                                     st.metric("MA Cross Signal", cross_signal)
+                                    st.metric("50 EMA (Latest)", f"{hist['50_EMA'].iloc[-1]:.2f}")
                                 
                                 with col3:
                                     volatility = hist['Close'].pct_change().std() * (252 ** 0.5) * 100
@@ -653,232 +783,3 @@ def main():
 
 if __name__ == "__main__":
     main() 
-
-
-
-# Sample Stock information
-# {
-# "address1":"Plot No. 44/97 A"
-# "address2":"3rd cross Electronic City Hosur Road"
-# "city":"Bengaluru"
-# "zip":"560100"
-# "country":"India"
-# "phone":"91 80 2852 0261"
-# "fax":"91 80 2852 0362"
-# "website":"https://www.infosys.com"
-# "industry":"Information Technology Services"
-# "industryKey":"information-technology-services"
-# "industryDisp":"Information Technology Services"
-# "sector":"Technology"
-# "sectorKey":"technology"
-# "sectorDisp":"Technology"
-# "longBusinessSummary":"Infosys Limited, together with its subsidiaries, provides consulting, technology, outsourcing, and next-generation digital services in North America, Europe, India, and internationally. It provides digital marketing and digital workplace, digital commerce, digital experience and interactions, metaverse, data analytics and AI, applied AI, generative AI, sustainability, blockchain, engineering, Internet of Things, enterprise agile DevOps, application modernization, cloud, digital process automation, digital supply chain, Microsoft business application and cloud business, service experience transformation, energy transition, cyber security, and quality engineering solutions; Oracle, SAP, and Saleforce solutions; API economy and microservices; and Topaz, an AI-first set of services, solutions, and platforms using generative AI technologies. The company's products and platforms include Finacle, a core banking solution; Edge suite of products; Panaya platform, Infosys Equinox, Infosys Helix, Infosys Applied AI, Infosys Cortex, and Stater digital platforms; and Infosys McCamish, an insurance platform. It serves aerospace and defense, agriculture, automotive, chemical manufacturing, communication, consumer packaged goods, education, engineering procurement and construction, healthcare, high technology, industrial manufacturing, information services and publishing, insurance, life science, logistics and distribution, media, entertainment, mining, oil and gas, private equity, professional, public, retail, travel, hospitality, utilities, and waste management industries. The company was formerly known as Infosys Technologies Limited and changed its name to Infosys Limited in June 2011. Infosys Limited was incorporated in 1981 and is headquartered in Bengaluru, India."
-# "fullTimeEmployees":317788
-# "companyOfficers":[
-# 0:{
-# "maxAge":1
-# "name":"Mr. Nandan M. Nilekani"
-# "age":67
-# "title":"Co-Founder & Chairman"
-# "yearBorn":1956
-# "fiscalYear":2024
-# "exercisedValue":0
-# "unexercisedValue":0
-# }
-# 1:{
-# "maxAge":1
-# "name":"Mr. Salil Satish Parekh"
-# "age":59
-# "title":"MD, CEO & Director"
-# "yearBorn":1964
-# "fiscalYear":2024
-# "totalPay":280315398
-# "exercisedValue":0
-# "unexercisedValue":0
-# }
-# 2:{
-# "maxAge":1
-# "name":"Ms. Inderpreet  Sawhney"
-# "age":58
-# "title":"Executive VP, Chief Legal Officer & Chief Compliance Officer"
-# "yearBorn":1965
-# "fiscalYear":2024
-# "totalPay":92669143
-# "exercisedValue":0
-# "unexercisedValue":0
-# }
-# 3:{
-# "maxAge":1
-# "name":"Mr. Shaji  Mathew"
-# "age":52
-# "title":"Chief Human Resources Officer"
-# "yearBorn":1971
-# "fiscalYear":2024
-# "totalPay":21797165
-# "exercisedValue":0
-# "unexercisedValue":0
-# }
-# 4:{
-# "maxAge":1
-# "name":"Mr. Jayesh  Sanghrajka"
-# "age":49
-# "title":"Chief Financial Officer"
-# "yearBorn":1974
-# "fiscalYear":2024
-# "totalPay":15289008
-# "exercisedValue":0
-# "unexercisedValue":0
-# }
-# 5:{
-# "maxAge":1
-# "name":"Mr. Anand  Swaminathan"
-# "title":"Executive VP and Segment Head of Communication, Media & Technology"
-# "fiscalYear":2024
-# "exercisedValue":0
-# "unexercisedValue":0
-# }
-# 6:{
-# "maxAge":1
-# "name":"Mr. Sandeep  Mahindroo"
-# "age":46
-# "title":"VP, Financial Controller & Head of Investor Relations"
-# "yearBorn":1977
-# "fiscalYear":2024
-# "exercisedValue":0
-# "unexercisedValue":0
-# }
-# 7:{
-# "maxAge":1
-# "name":"Mr. Sumit  Virmani"
-# "title":"Executive VP & Chief Marketing Officer"
-# "fiscalYear":2024
-# "exercisedValue":0
-# "unexercisedValue":0
-# }
-# 8:{
-# "maxAge":1
-# "name":"Mr. Srikantan  Moorthy"
-# "age":61
-# "title":"Executive VP, Head of US operation and Global Head of Education, Training & Assessment"
-# "yearBorn":1962
-# "fiscalYear":2024
-# "totalPay":56250406
-# "exercisedValue":0
-# "unexercisedValue":0
-# }
-# 9:{
-# "maxAge":1
-# "name":"Mr. Narsimha Rao Mannepalli"
-# "age":55
-# "title":"Head, Global Services  Cloud, Infra. & Security Solutions & Independent Validation Solutions & EVP"
-# "yearBorn":1968
-# "fiscalYear":2024
-# "exercisedValue":0
-# "unexercisedValue":0
-# }
-# ]
-# "auditRisk":7
-# "boardRisk":5
-# "compensationRisk":4
-# "shareHolderRightsRisk":1
-# "overallRisk":4
-# "governanceEpochDate":1733011200
-# "compensationAsOfEpochDate":1735603200
-# "irWebsite":"http://www.infosys.com/investors/pages/index.aspx"
-# "maxAge":86400
-# "priceHint":2
-# "previousClose":1906
-# "open":1892.3
-# "dayLow":1845.05
-# "dayHigh":1897
-# "regularMarketPreviousClose":1906
-# "regularMarketOpen":1892.3
-# "regularMarketDayLow":1845.05
-# "regularMarketDayHigh":1897
-# "dividendRate":41
-# "dividendYield":0.0215
-# "exDividendDate":1730160000
-# "payoutRatio":0.5924
-# "fiveYearAvgDividendYield":2.13
-# "beta":0.626
-# "trailingPE":28.571426
-# "forwardPE":26.065311
-# "volume":3612748
-# "regularMarketVolume":3612748
-# "averageVolume":5431247
-# "averageVolume10days":4838853
-# "averageDailyVolume10Day":4838853
-# "marketCap":7894721888256
-# "fiftyTwoWeekLow":1358.35
-# "fiftyTwoWeekHigh":2006.45
-# "priceToSalesTrailing12Months":419.12943
-# "fiftyDayAverage":1881.657
-# "twoHundredDayAverage":1725.4568
-# "trailingAnnualDividendRate":0.49
-# "trailingAnnualDividendYield":0.0002570829
-# "currency":"INR"
-# "enterpriseValue":7784401731584
-# "profitMargins":0.17159
-# "floatShares":3509357129
-# "sharesOutstanding":4142030080
-# "heldPercentInsiders":0.15783
-# "heldPercentInstitutions":0.50441
-# "impliedSharesOutstanding":4199320064
-# "bookValue":2.605
-# "priceToBook":721.689
-# "lastFiscalYearEnd":1711843200
-# "nextFiscalYearEnd":1743379200
-# "mostRecentQuarter":1727654400
-# "earningsQuarterlyGrowth":0.035
-# "netIncomeToCommon":3232000000
-# "trailingEps":65.8
-# "forwardEps":72.32
-# "lastSplitFactor":"2:1"
-# "lastSplitDate":1536019200
-# "enterpriseToRevenue":413.273
-# "enterpriseToEbitda":1794.468
-# "52WeekChange":0.26174498
-# "SandP52WeekChange":0.2555108
-# "lastDividendValue":21
-# "lastDividendDate":1730160000
-# "exchange":"NSI"
-# "quoteType":"EQUITY"
-# "symbol":"INFY.NS"
-# "underlyingSymbol":"INFY.NS"
-# "shortName":"INFOSYS LIMITED"
-# "longName":"Infosys Limited"
-# "firstTradeDateEpochUtc":820467900
-# "timeZoneFullName":"Asia/Kolkata"
-# "timeZoneShortName":"IST"
-# "uuid":"6e0e3969-0bf9-3676-8a5c-d91501277ca6"
-# "messageBoardId":"finmb_398006"
-# "gmtOffSetMilliseconds":19800000
-# "currentPrice":1880
-# "targetHighPrice":2330
-# "targetLowPrice":1530
-# "targetMeanPrice":2049.0244
-# "targetMedianPrice":2110
-# "recommendationMean":2.04878
-# "recommendationKey":"buy"
-# "numberOfAnalystOpinions":41
-# "totalCash":3488000000
-# "totalCashPerShare":0.842
-# "ebitda":4337999872
-# "totalDebt":1051000000
-# "quickRatio":1.891
-# "currentRatio":2.193
-# "totalRevenue":18836000768
-# "debtToEquity":9.697
-# "revenuePerShare":4.55
-# "returnOnAssets":0.15253
-# "returnOnEquity":0.31404
-# "freeCashflow":2286749952
-# "operatingCashflow":3671000064
-# "earningsGrowth":0.042
-# "revenueGrowth":0.037
-# "grossMargins":0.29518
-# "ebitdaMargins":0.23030001
-# "operatingMargins":0.21945
-# "financialCurrency":"USD"
-# "trailingPegRatio":2.9865
-# }
